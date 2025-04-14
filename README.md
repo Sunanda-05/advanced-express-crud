@@ -123,12 +123,12 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 | Method | Endpoint                            | Description                              | Auth Required |
 |--------|-------------------------------------|------------------------------------------|---------------|
 | GET    | `/documents/access/:linkToken`      | Access doc via secure link               | ❌            |
-| POST   | `/documents/:id/regenerate-link` (yet to implement)| Generate a new linkToken                 | ✅ (owner)     |
-| DELETE | `/documents/:id/disable-link` (yet to implement)| Disable link access                      | ✅ (owner)     |
+| POST   | `/documents/:id/regenerate-link`    | Generate a new linkToken                 | ✅ (owner)     |
+| DELETE | `/documents/:id/disable-link`       | Disable link access                      | ✅ (owner)     |
 
 ---
 
-### 👥 Document Sharing (yet to implement)
+### 👥 Document Sharing
 
 | Method | Endpoint                                | Description                            | Auth Required |
 |--------|-----------------------------------------|----------------------------------------|---------------|

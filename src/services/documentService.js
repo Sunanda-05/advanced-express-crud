@@ -91,6 +91,8 @@ export const updatePutDocument = async (id, data, userId) => {
     !document.linkToken
   ) {
     document.linkToken = generateLinkToken();
+  } else if (document.visibility === "link" && data.visibility !== "link") {
+    document.linkToken = null;
   }
 
   document.visibility = data.visibility ?? "private";
@@ -112,6 +114,8 @@ export const updatePatchDocument = async (id, data, userId) => {
     !document.linkToken
   ) {
     document.linkToken = generateLinkToken();
+  } else if (document.visibility === "link" && data.visibility !== "link") {
+    document.linkToken = null;
   }
 
   Object.keys(data).forEach((key) => {
@@ -150,8 +154,61 @@ export const shareDocument = async (id, targetUserId, ownerId) => {
   return document;
 };
 
+export const unshareDocument = async (id, targetUserId, ownerId) => {
+  const document = await Doc.findById(id);
+  if (!document) throw new ApiError(404, "Document not found");
+
+  if (document.owner.toString() !== ownerId.toString()) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  if (document.sharedWith.includes(targetUserId)) {
+    return await Doc.findByIdAndUpdate(
+      id,
+      { $pull: { sharedWith: targetUserId } },
+      { new: true }
+    );
+  }
+
+  return document;
+};
+
 export const getDocumentByLinkToken = async (linkToken) => {
   const document = await Doc.findOne({ linkToken, visibility: "link" });
   if (!document) throw new ApiError(404, "Document not found");
   return document;
+};
+
+export const regenerateLinkToken = async (id, ownerId) => {
+  const document = await Doc.findOne({
+    _id: id,
+    owner: ownerId,
+  });
+
+  if (!document) throw new ApiError(404, "Document not found");
+  if (document.visibility !== "link")
+    throw new ApiError(400, "Invalid visibility");
+
+  return await Doc.findByIdAndUpdate(
+    id,
+    { linkToken: generateLinkToken() },
+    { new: true }
+  );
+};
+
+export const disableLinkToken = async (id, ownerId) => {
+  const document = await Doc.findOne({
+    _id: id,
+    owner: ownerId,
+  });
+
+  if (!document) throw new ApiError(404, "Document not found");
+  if (document.visibility !== "link")
+    throw new ApiError(400, "Invalid visibility");
+
+  return await Doc.findOneAndUpdate(
+    { _id: id, linkToken: { $exists: true } },
+    { $set: { linkToken: null, visibility: "private" } },
+    { new: true }
+  );
 };

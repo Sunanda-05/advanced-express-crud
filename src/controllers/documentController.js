@@ -7,6 +7,9 @@ import {
   getDocumentById,
   deleteDocument,
   getDocumentByLinkToken,
+  unshareDocument,
+  regenerateLinkToken,
+  disableLinkToken,
 } from "../services/documentService.js";
 
 export const createDocumentHandler = async (req, res, next) => {
@@ -56,6 +59,43 @@ export const shareDocumentHandler = async (req, res, next) => {
     const updated = await shareDocument(
       req.params.id,
       req.body.userId,
+      req.user.id
+    );
+    res.status(200).json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const unshareDocumentHandler = async (req, res, next) => {
+  try {
+    const updated = await unshareDocument(
+      req.params.id,
+      req.body.userId,
+      req.user.id
+    );
+    res.status(200).json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const regenerateTokenHandler = async (req, res, next) => {
+  try {
+    const updated = await regenerateLinkToken(
+      req.params.id,
+      req.user.id
+    );
+    res.status(200).json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const disableTokenHandler = async (req, res, next) => {
+  try {
+    const updated = await disableLinkToken(
+      req.params.id,
       req.user.id
     );
     res.status(200).json(updated);
