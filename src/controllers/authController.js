@@ -41,7 +41,7 @@ export const loginUser = async (request, response) => {
       httpOnly: true, // Prevents XSS (JavaScript cannot access it)
       secure: false, // Only send over HTTPS     //make to true when https
       sameSite: "Lax", // Prevents most CSRF attacks
-      path: "/auth/refresh-token", // Restrict usage to refresh endpoint
+      path: "/api/auth", // Restrict usage to refresh endpoint
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -59,7 +59,6 @@ export const loginUser = async (request, response) => {
 export const refreshTokens = async (request, response) => {
   try {
     const refreshToken = request.cookies?.refreshToken;
-
     if (!refreshToken)
       return response.status(401).json({ error: "No refresh token provided." });
 
@@ -93,7 +92,7 @@ export const logoutUser = async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
     await deleteRefreshToken(refreshToken);
 
-    response.clearCookie("refreshToken");
+    response.clearCookie("refreshToken", { path: "/api/auth" });
     return response.json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Error in Refresh Token:", error);

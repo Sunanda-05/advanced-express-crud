@@ -12,11 +12,12 @@ import {
   disableTokenHandler,
 } from "../controllers/documentController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
+import { validateDocument } from "../middlewares/validateDocMiddleware.js";
 
 const router = Router({ mergeParams: true });
 
 router.get("/", authMiddleware, getDocumentsHandler);
-router.post("/", authMiddleware, createDocumentHandler);
+router.post("/", authMiddleware, validateDocument, createDocumentHandler);
 
 router.get("/:id", authMiddleware, getSingleDocumentHandler);
 router.patch("/:id", authMiddleware, updateDocumentHandler);

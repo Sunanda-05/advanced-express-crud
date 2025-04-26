@@ -27,9 +27,9 @@ app.use(helmetConfig);
 app.use(rateLimitMiddleware);
 // app.use(csrfMiddleware);
 
-app.use("/auth", authRoutes);
-app.use("/user", userRoutes);
-app.use("/document", documentRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/document", documentRoutes);
 
 app.use(errorHandler);
 

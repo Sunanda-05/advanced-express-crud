@@ -1,3 +1,4 @@
+import { validationResult } from "express-validator";
 import {
   updatePatchDocument,
   updatePutDocument,
@@ -14,6 +15,11 @@ import {
 
 export const createDocumentHandler = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const document = await createDocument(req.body, req.user.id);
     res.status(201).json(document);
   } catch (err) {
@@ -82,10 +88,7 @@ export const unshareDocumentHandler = async (req, res, next) => {
 
 export const regenerateTokenHandler = async (req, res, next) => {
   try {
-    const updated = await regenerateLinkToken(
-      req.params.id,
-      req.user.id
-    );
+    const updated = await regenerateLinkToken(req.params.id, req.user.id);
     res.status(200).json(updated);
   } catch (err) {
     next(err);
@@ -94,10 +97,7 @@ export const regenerateTokenHandler = async (req, res, next) => {
 
 export const disableTokenHandler = async (req, res, next) => {
   try {
-    const updated = await disableLinkToken(
-      req.params.id,
-      req.user.id
-    );
+    const updated = await disableLinkToken(req.params.id, req.user.id);
     res.status(200).json(updated);
   } catch (err) {
     next(err);
