@@ -1,6 +1,8 @@
 import Doc from "../models/documentModel.js";
+import Tag from "../models/tagModel.js";
 import ApiError from "../utils/ApiError.js";
 import generateLinkToken from "../utils/linkToken.js";
+import { getTagIdsFromNames } from "./tagServices.js";
 
 export const createDocument = async (data, userId) => {
   try {
@@ -8,7 +10,15 @@ export const createDocument = async (data, userId) => {
     if (data.visibility === "link") {
       linkToken = generateLinkToken();
     }
-    const document = await Doc.create({ ...data, linkToken, owner: userId });
+
+    const tagDocuments = data.tags ? await getTagIdsFromNames(data.tags) : [];
+
+    const document = await Doc.create({
+      ...data,
+      linkToken,
+      owner: userId,
+      tags: tagDocuments,
+    });
     return document;
   } catch (error) {
     throw new Error("Error creating document");
@@ -18,6 +28,7 @@ export const createDocument = async (data, userId) => {
 export const getAllDocuments = async (userId, query) => {
   try {
     const {
+      tags,
       page = 1,
       limit = 10,
       search = "",
@@ -34,6 +45,14 @@ export const getAllDocuments = async (userId, query) => {
       accessFilter.$text = { $search: search };
     }
 
+    if (tags) {
+      const tagArray = tags.split(',');
+      const tagObjects = await Tag.find({ name: { $in: tagArray } });
+      const tagIds = tagObjects.map((tag) => tag._id);
+      accessFilter.tags = { $in: tagIds };
+    }
+
+
     const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
     const totalDocs = await Doc.countDocuments(accessFilter);
 
@@ -41,7 +60,8 @@ export const getAllDocuments = async (userId, query) => {
     const documents = await Doc.find(accessFilter)
       .sort(sort)
       .skip(skip)
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .populate("tags");
 
     const totalPages = Math.ceil(totalDocs / limit);
 
@@ -65,7 +85,7 @@ export const getDocumentById = async (userId, id) => {
     const document = await Doc.findOne({
       $or: [{ owner: userId }, { "sharedWith.user": userId }],
       _id: id,
-    });
+    }).populate("tags");;
 
     return document;
   } catch (error) {
@@ -95,6 +115,11 @@ export const updatePutDocument = async (id, data, userId) => {
     document.linkToken = null;
   }
 
+  if (data.tags) {
+    const tagIds = await getTagIdsFromNames(data.tags);
+    document.tags = tagIds;
+  }
+
   document.visibility = data.visibility ?? "private";
   await document.save();
   return document;
@@ -118,8 +143,15 @@ export const updatePatchDocument = async (id, data, userId) => {
     document.linkToken = null;
   }
 
+  if (data.tags) {
+    const tagIds = await getTagIdsFromNames(data.tags);
+    document.tags = [...new Set([...document.tags, ...tagIds])];
+  }
+
   Object.keys(data).forEach((key) => {
-    document[key] = data[key];
+    if (key != "tags") {
+      document[key] = data[key];
+    }
   });
 
   await document.save();

@@ -1,0 +1,694 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Document API",
+    "version": "1.0.0",
+    "description": "API for managing documents"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Document": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "665f2c5a9c39e4d7b8e234a1"
+          },
+          "title": {
+            "type": "string",
+            "example": "Project Plan"
+          },
+          "content": {
+            "type": "string",
+            "example": "This is the content of the document."
+          },
+          "isStarred": {
+            "type": "boolean",
+            "default": false
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          },
+          "owner": {
+            "$ref": "#/components/schemas/User"
+          },
+          "sharedWith": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "user": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "permission": {
+                  "type": "string",
+                  "enum": ["read", "edit"],
+                  "default": "read"
+                }
+              }
+            }
+          },
+          "linkToken": {
+            "type": "string",
+            "example": "abc123xyz"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["private", "public", "link"],
+            "default": "private"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "665f2c5a9c39e4d7b8e234b2"
+          },
+          "name": {
+            "type": "string",
+            "example": "important"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "665f2c5a9c39e4d7b8e234c3"
+          },
+          "name": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "example": "johndoe@example.com"
+          }
+        }
+      },
+      "DocumentInput": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "isStarred": { "type": "boolean" },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["private", "public", "link"]
+          },
+          "sharedWith": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "user": {
+                  "type": "string",
+                  "description": "MongoDB ObjectId string"
+                }
+              },
+              "required": ["user"]
+            }
+          }
+        }
+      },
+      "DocumentPatchInput": {
+        "allOf": [
+          { "$ref": "#/components/schemas/DocumentInput" },
+          {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          }
+        ]
+      },
+      "UserRegisterInput": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" }
+        }
+      },
+      "UserLoginInput": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" }
+        }
+      },
+      "AuthTokens": {
+        "type": "object",
+        "required": ["accessToken"],
+        "properties": {
+          "accessToken": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegisterInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        },
+        "tags": ["Auth"],
+        "security": []
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login user and return access token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLoginInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful, returns JWT tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "tags": ["Auth"],
+        "security": []
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Logout user and invalidate refresh token",
+        "responses": {
+          "204": {
+            "description": "Logout successful, no content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": ["Auth"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/refresh-token": {
+      "post": {
+        "summary": "Refresh access token using refresh token cookie",
+        "responses": {
+          "200": {
+            "description": "New access token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing refresh token"
+          }
+        },
+        "tags": ["Auth"]
+      }
+    },
+    "/api/user": {
+      "get": {
+        "summary": "Get logged user details",
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["User"]
+      }
+    },
+    "/api/document": {
+      "get": {
+        "summary": "Get all documents",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["asc", "desc"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Document" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Document"]
+      },
+      "post": {
+        "summary": "Create a new document",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DocumentInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Document"]
+      }
+    },
+    "/api/document/{id}": {
+      "get": {
+        "summary": "Get document by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Document" }
+              }
+            }
+          },
+          "404": { "description": "Document not found" }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Document"]
+      },
+      "put": {
+        "summary": "Update a document entirely",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DocumentInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document updated"
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Document"]
+      },
+      "patch": {
+        "summary": "Update a document partially",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DocumentPatchInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Document"]
+      },
+      "delete": {
+        "summary": "Delete a document",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Document"]
+      }
+    },
+    "/api/document/{id}/share": {
+      "patch": {
+        "summary": "Share a document privately",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "example": "665f2c5a9c39e4d7b8e234c3"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document shared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document not found"
+          },
+          "401": {
+            "description": "Not authorized to share the document"
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Share"]
+      }
+    },
+    "/api/document/{id}/unshare": {
+      "patch": {
+        "summary": "Unshare a document",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "example": "665f2c5a9c39e4d7b8e234c3"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document unshared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document not found"
+          },
+          "401": {
+            "description": "Not authorized to share the document"
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Share"]
+      }
+    },
+    "/api/document/{id}/regenerate-link": {
+      "patch": {
+        "summary": "Regenerate a document access link",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document shared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document not found"
+          },
+          "401": {
+            "description": "Not authorized to share the document"
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Link"]
+      }
+    },
+    "/api/document/{id}/disable-link": {
+      "patch": {
+        "summary": "Unshare a document",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public access link deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document not found"
+          },
+          "401": {
+            "description": "Not authorized to share the document"
+          }
+        },
+        "security": [{ "bearerAuth": [] }],
+        "tags": ["Link"]
+      }
+    },
+    "/api/document/access/{linkToken}": {
+      "patch": {
+        "summary": "Unshare a document",
+        "parameters": [
+          {
+            "name": "linkToken",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document shared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document not found"
+          }
+        },
+        "security": [],
+        "tags": ["Share"]
+      }
+    }
+  }
+}

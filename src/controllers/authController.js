@@ -90,6 +90,9 @@ export const refreshTokens = async (request, response) => {
 export const logoutUser = async (request, response) => {
   try {
     const refreshToken = request.cookies.refreshToken;
+    if (!refreshToken) {
+      return response.status(400).json({ message: "No token provided." });
+    }
     await deleteRefreshToken(refreshToken);
 
     response.clearCookie("refreshToken", { path: "/api/auth" });

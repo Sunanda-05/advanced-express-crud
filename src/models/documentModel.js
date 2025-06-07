@@ -10,6 +10,11 @@ const documentSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    isStarred: {
+      type: Boolean,
+      default: false
+    },
+    tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tag' }],
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

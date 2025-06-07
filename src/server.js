@@ -2,14 +2,16 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import swaggerUi from "swagger-ui-express";
 
 import helmetConfig from "./config/helmetConfig.js";
 import corsConfig from "./config/corsConfig.js";
-import authMiddleware from "./middlewares/authMiddleware.js";
 import csrfMiddleware from "./middlewares/csrfMiddleware.js";
 import rateLimitMiddleware from "./middlewares/rateLimitMiddleware.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import connectDB from "./config/db.js";
+
+import openapiSpec from "./openapi.json" with { type: "json" };
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -26,6 +28,8 @@ app.use(morgan("dev"));
 app.use(helmetConfig);
 app.use(rateLimitMiddleware);
 // app.use(csrfMiddleware);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);

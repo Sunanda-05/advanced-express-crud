@@ -20,6 +20,7 @@ export const createDocumentHandler = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    //TODO: handle sharedwith here
     const document = await createDocument(req.body, req.user.id);
     res.status(201).json(document);
   } catch (err) {
