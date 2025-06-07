@@ -3,7 +3,7 @@
   "info": {
     "title": "Document API",
     "version": "1.0.0",
-    "description": "API for managing documents"
+    "description": "Secure and Shareable Document Management System\n\n A comprehensive RESTful API built with **Node.js**, **Express**, and **MongoDB**, showcasing **modern API design patterns**, **authentication**, and **access control** mechanisms.\n\n This project draws inspiration from Google Drive-like systems (without file uploads), focusing on the core logic of **document sharing** with **configurable privacy** settings: **private**, **shared with specific users**, or accessible via **unique links**."
   },
   "components": {
     "securitySchemes": {

@@ -97,11 +97,11 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 
 | Method | Endpoint             | Description                    | Auth Required |
 |--------|----------------------|--------------------------------|---------------|
-| POST   | `/auth/register`     | Register a new user            | ❌            |
-| POST   | `/auth/login`        | Login & get tokens             | ❌            |
-| POST   | `/auth/logout`       | Logout & delete refresh token  | ✅            |
-| POST   | `/auth/refresh`      | Refresh access token           | ✅ (cookie)   |
-| GET    | `/user`              | Get current user profile       | ✅            |
+| POST   | `/api/auth/register`     | Register a new user            | ❌            |
+| POST   | `/api/auth/login`        | Login & get tokens             | ❌            |
+| POST   | `/api/auth/logout`       | Logout & delete refresh token  | ✅            |
+| POST   | `/api/auth/refresh`      | Refresh access token           | ✅ (cookie)   |
+| GET    | `/api/user`              | Get current user profile       | ✅            |
 
 ---
 
@@ -109,12 +109,12 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 
 | Method | Endpoint                          | Description                             | Auth Required |
 |--------|-----------------------------------|-----------------------------------------|---------------|
-| POST   | `/documents`                      | Create new document                     | ✅            |
-| GET    | `/documents`                      | Get paginated documents (owned/shared)  | ✅            |
-| GET    | `/documents/:id`                  | Get single document by ID               | ✅ (if allowed)|
-| PUT    | `/documents/:id`                  | Replace a document                      | ✅ (owner)     |
-| PATCH  | `/documents/:id`                  | Partially update a document             | ✅ (owner)     |
-| DELETE | `/documents/:id`                  | Delete a document                       | ✅ (owner)     |
+| POST   | `/api/documents`                      | Create new document                     | ✅            |
+| GET    | `/api/documents`                      | Get paginated documents (owned/shared)  | ✅            |
+| GET    | `/api/documents/:id`                  | Get single document by ID               | ✅ (if allowed)|
+| PUT    | `/api/documents/:id`                  | Replace a document                      | ✅ (owner)     |
+| PATCH  | `/api/documents/:id`                  | Partially update a document             | ✅ (owner)     |
+| DELETE | `/api/documents/:id`                  | Delete a document                       | ✅ (owner)     |
 
 ---
 
@@ -122,9 +122,9 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 
 | Method | Endpoint                            | Description                              | Auth Required |
 |--------|-------------------------------------|------------------------------------------|---------------|
-| GET    | `/documents/access/:linkToken`      | Access doc via secure link               | ❌            |
-| POST   | `/documents/:id/regenerate-link`    | Generate a new linkToken                 | ✅ (owner)     |
-| DELETE | `/documents/:id/disable-link`       | Disable link access                      | ✅ (owner)     |
+| GET    | `/api/documents/access/:linkToken`      | Access doc via secure link               | ❌            |
+| POST   | `/api/documents/:id/regenerate-link`    | Generate a new linkToken                 | ✅ (owner)     |
+| DELETE | `/api/documents/:id/disable-link`       | Disable link access                      | ✅ (owner)     |
 
 ---
 
@@ -132,8 +132,8 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 
 | Method | Endpoint                                | Description                            | Auth Required |
 |--------|-----------------------------------------|----------------------------------------|---------------|
-| PATCH  | `/documents/:id/share`                  | Share with specific users              | ✅ (owner)     |
-| PATCH  | `/documents/:id/unshare`                | Remove users from shared list          | ✅ (owner)     |
+| PATCH  | `/api/documents/:id/share`                  | Share with specific users              | ✅ (owner)     |
+| PATCH  | `/api/documents/:id/unshare`                | Remove users from shared list          | ✅ (owner)     |
 
 ---
 
@@ -141,7 +141,7 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 
 | Method | Endpoint             | Query Params                             | Description                      |
 |--------|----------------------|------------------------------------------|----------------------------------|
-| GET    | `/documents`         | `?search=&page=&limit=&sort=`            | Full-text search & pagination    |
+| GET    | `/api/documents`         | `?search=&page=&limit=&sort=`            | Full-text search & pagination    |
 
 > Search is case-insensitive and supports indexed full-text queries on `title` and `content`.
 
@@ -160,28 +160,23 @@ Authorization: Bearer <accessToken>
 For accessing documents via shared links:
 
 ```http
-GET /documents/access/:linkToken
+GET /api/documents/access/:linkToken
 ```
 
-## 📌 Future Enhancements
+## 📌 Also implements - 
 
 * 🔍 **Input Validation**
-  * Integration with Joi or Zod
-  * Request schema validation
+  * Request schema validation with `express-validator`
 
 * 🧼 **Enhanced Security**
-  * XSS protection with `xss-clean`
-  * MongoDB injection prevention with `express-mongo-sanitize`
+  * XSS protection with `helmet`
 
-* 📊 **Monitoring & Analytics**
-  * Request tracking
-  * Performance metrics
 
 ## 🚀 Getting Started
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/Sunanda-05/advanced-express-crud
 
 # Navigate to project directory
 cd advanced-express-crud
