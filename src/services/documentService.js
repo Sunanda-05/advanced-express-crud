@@ -103,7 +103,7 @@ export const updatePutDocument = async (id, data, userId) => {
   }
 
   document.title = data.title ?? "";
-  document.content = data.content ?? "";
+  document.content = data.content ?? {};
   document.sharedWith = data.sharedWith ?? [];
   if (
     data.visibility === "link" &&

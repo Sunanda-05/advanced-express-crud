@@ -7,14 +7,14 @@ const documentSchema = new mongoose.Schema(
       required: true,
     },
     content: {
-      type: String,
-      default: "",
+      type: Object,
+      default: {},
     },
     isStarred: {
       type: Boolean,
-      default: false
+      default: false,
     },
-    tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tag' }],
+    tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag" }],
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -49,11 +49,10 @@ const documentSchema = new mongoose.Schema(
   }
 );
 
-
 // For full-text search
-documentSchema.index({ title: "text", content: "text" });
-documentSchema.index({ owner: 1, _id: 1 });  // For the owner-docId pair
-documentSchema.index({ "sharedWith.user": 1, _id: 1 });  // For shared documents
-documentSchema.index({ linkToken: 1, visibility: 1 });  // For link-shared documents
+documentSchema.index({ title: "text" });
+documentSchema.index({ owner: 1, _id: 1 }); // For the owner-docId pair
+documentSchema.index({ "sharedWith.user": 1, _id: 1 }); // For shared documents
+documentSchema.index({ linkToken: 1, visibility: 1 }); // For link-shared documents
 
 export default mongoose.model("Document", documentSchema);

@@ -9,7 +9,7 @@ export const validateDocument = [
     .withMessage("Title must be a string"),
 
   // Optional: content
-  body("content").optional().isString().withMessage("Content must be a string"),
+  body("content").optional().isObject().withMessage("Content must be a json object"),
 
   body("isStarred")
     .optional()
