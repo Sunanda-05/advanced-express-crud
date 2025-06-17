@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, createUser } from "../services/authService.js";
+import { getLoginUser, createUser, getUserByEmail } from "../services/authService.js";
 import {
   deleteRefreshToken,
   generateRefreshToken,
@@ -20,7 +20,7 @@ export const loginUser = async (request, response) => {
         .json({ error: "Email and password are required." });
     }
 
-    const user = await getUserByEmail(email);
+    const user = await getLoginUser(email);
     if (!user) {
       return response.status(404).json({ error: "Email is not registered." });
     }
@@ -47,6 +47,7 @@ export const loginUser = async (request, response) => {
 
     return response.status(200).json({
       message: "Login successful!",
+      userId: user.id,
       email,
       accessToken,
     });

@@ -66,8 +66,11 @@ export const shareDocumentHandler = async (req, res, next) => {
     const updated = await shareDocument(
       req.params.id,
       req.body.userId,
+      req.body.permission,
       req.user.id
     );
+
+    console.log(req.body.permission)
     res.status(200).json(updated);
   } catch (err) {
     next(err);

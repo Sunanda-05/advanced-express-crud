@@ -1,8 +1,7 @@
 import Doc from "../models/documentModel.js";
-import Tag from "../models/tagModel.js";
 import ApiError from "../utils/ApiError.js";
+import { hasEditAccess } from "../utils/editAccess.js";
 import generateLinkToken from "../utils/linkToken.js";
-import { getTagIdsFromNames } from "./tagServices.js";
 
 export const createDocument = async (data, userId) => {
   try {
@@ -11,13 +10,11 @@ export const createDocument = async (data, userId) => {
       linkToken = generateLinkToken();
     }
 
-    const tagDocuments = data.tags ? await getTagIdsFromNames(data.tags) : [];
-
     const document = await Doc.create({
       ...data,
       linkToken,
       owner: userId,
-      tags: tagDocuments,
+      tags: data.addTags ? Array.from(new Set(data.addTags)) : [],
     });
     return document;
   } catch (error) {
@@ -46,22 +43,21 @@ export const getAllDocuments = async (userId, query) => {
     }
 
     if (tags) {
-      const tagArray = tags.split(',');
-      const tagObjects = await Tag.find({ name: { $in: tagArray } });
-      const tagIds = tagObjects.map((tag) => tag._id);
-      accessFilter.tags = { $in: tagIds };
+      const tagArray = tags.split(",");
+      accessFilter.tags = { $in: tagArray };
     }
-
 
     const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
     const totalDocs = await Doc.countDocuments(accessFilter);
 
-    // Fetch paginated docs
     const documents = await Doc.find(accessFilter)
       .sort(sort)
       .skip(skip)
       .limit(Number(limit))
-      .populate("tags");
+      .populate({
+        path: "sharedWith.user",
+        select: "_id name email",
+      });
 
     const totalPages = Math.ceil(totalDocs / limit);
 
@@ -85,7 +81,11 @@ export const getDocumentById = async (userId, id) => {
     const document = await Doc.findOne({
       $or: [{ owner: userId }, { "sharedWith.user": userId }],
       _id: id,
-    }).populate("tags");;
+    }).populate({
+      path: "sharedWith.user",
+      model: "User",
+      select: "_id name email",
+    });
 
     return document;
   } catch (error) {
@@ -95,16 +95,20 @@ export const getDocumentById = async (userId, id) => {
 };
 
 export const updatePutDocument = async (id, data, userId) => {
-  const document = await Doc.findById(id);
+  const document = await Doc.findById(id).populate({
+    path: "sharedWith.user",
+    select: "_id name email",
+  });
   if (!document) throw new ApiError(404, "Document not found");
 
-  if (document.owner.toString() !== userId.toString()) {
+  if (!hasEditAccess(document, userId)) {
     throw new ApiError(401, "Unauthorized");
   }
 
   document.title = data.title ?? "";
   document.content = data.content ?? {};
   document.sharedWith = data.sharedWith ?? [];
+
   if (
     data.visibility === "link" &&
     document.visibility !== "link" &&
@@ -115,10 +119,7 @@ export const updatePutDocument = async (id, data, userId) => {
     document.linkToken = null;
   }
 
-  if (data.tags) {
-    const tagIds = await getTagIdsFromNames(data.tags);
-    document.tags = tagIds;
-  }
+  document.tags = data.tags ? Array.from(new Set(data.tags)) : [];
 
   document.visibility = data.visibility ?? "private";
   await document.save();
@@ -126,10 +127,13 @@ export const updatePutDocument = async (id, data, userId) => {
 };
 
 export const updatePatchDocument = async (id, data, userId) => {
-  const document = await Doc.findById(id);
+  const document = await Doc.findById(id).populate({
+    path: "sharedWith.user",
+    select: "_id name email",
+  });
   if (!document) throw new ApiError(404, "Document not found");
 
-  if (document.owner.toString() !== userId.toString()) {
+  if (!hasEditAccess(document, userId)) {
     throw new ApiError(401, "Unauthorized");
   }
 
@@ -143,13 +147,18 @@ export const updatePatchDocument = async (id, data, userId) => {
     document.linkToken = null;
   }
 
-  if (data.tags) {
-    const tagIds = await getTagIdsFromNames(data.tags);
-    document.tags = [...new Set([...document.tags, ...tagIds])];
+  if (data.addTags) {
+    document.tags = Array.from(new Set([...document.tags, ...data.addTags]));
+  }
+
+  if (data.removeTags) {
+    document.tags = document.tags.filter(
+      (tag) => !data.removeTags.includes(tag)
+    );
   }
 
   Object.keys(data).forEach((key) => {
-    if (key != "tags") {
+    if (key !== "tags" && key !== "linkToken") {
       document[key] = data[key];
     }
   });
@@ -170,43 +179,68 @@ export const deleteDocument = async (id, userId) => {
   return deletedDoc;
 };
 
-export const shareDocument = async (id, targetUserId, ownerId) => {
-  const document = await Doc.findById(id);
+export const shareDocument = async (
+  id,
+  targetUserId,
+  newPermission,
+  ownerId
+) => {
+  const document = await Doc.findById(id).populate({
+    path: "sharedWith.user",
+    select: "_id name email",
+  });
   if (!document) throw new ApiError(404, "Document not found");
 
   if (document.owner.toString() !== ownerId.toString()) {
     throw new ApiError(401, "Unauthorized");
   }
 
-  if (!document.sharedWith.includes(targetUserId)) {
-    document.sharedWith.push(targetUserId);
-    await document.save();
+  console.log(newPermission);
+  const existing = document.sharedWith.find(
+    (entry) => entry.user?._id.toString() === targetUserId.toString()
+  );
+
+  console.log({ existing }, document.sharedWith);
+  if (!existing) {
+    document.sharedWith.push({ user: targetUserId, permission: newPermission });
+  } else if (existing.permission !== newPermission) {
+    existing.permission = newPermission;
   }
+
+  document.save();
 
   return document;
 };
 
 export const unshareDocument = async (id, targetUserId, ownerId) => {
-  const document = await Doc.findById(id);
+  const document = await Doc.findById(id).populate("tags").populate({
+    path: "sharedWith.user",
+    select: "_id name email",
+  });
   if (!document) throw new ApiError(404, "Document not found");
 
   if (document.owner.toString() !== ownerId.toString()) {
     throw new ApiError(401, "Unauthorized");
   }
 
-  if (document.sharedWith.includes(targetUserId)) {
-    return await Doc.findByIdAndUpdate(
-      id,
-      { $pull: { sharedWith: targetUserId } },
-      { new: true }
-    );
-  }
+  await Doc.findByIdAndUpdate(
+    id,
+    { $pull: { sharedWith: { user: targetUserId } } },
+    { new: true }
+  );
 
   return document;
 };
 
 export const getDocumentByLinkToken = async (linkToken) => {
-  const document = await Doc.findOne({ linkToken, visibility: "link" });
+  const document = await Doc.findOne({
+    linkToken,
+    visibility: "link",
+  }).populate({
+    path: "sharedWith.user",
+    select: "_id name email",
+  });
+  
   if (!document) throw new ApiError(404, "Document not found");
   return document;
 };

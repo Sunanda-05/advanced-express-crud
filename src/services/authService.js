@@ -1,6 +1,6 @@
 import User from "../models/userModel.js";
 
-const getUserByEmail = async (email) => {
+const getLoginUser = async (email) => {
   try {
     const user = await User.findOne({ email }).select("+password");
     return user;
@@ -9,6 +9,15 @@ const getUserByEmail = async (email) => {
     throw new Error("Error fetching user by email");
   }
 };
+
+const getUserByEmail = async (email)=>{
+  try {
+    const user = await User.findOne({email}).select("_id");
+    return user;
+  } catch (error) {
+    throw new Error("Error finding user");
+  }
+}
 
 const createUser = async (userData) => {
   try {
@@ -31,4 +40,4 @@ const getUserById = async (id) => {
   }
 };
 
-export { getUserByEmail, createUser, getUserById };
+export { getUserByEmail, createUser, getUserById, getLoginUser };
