@@ -24,6 +24,19 @@ export const createDocument = async (data, userId) => {
 
 export const getAllDocuments = async (userId, query) => {
   try {
+    const visibilityMap = {
+      private: {
+        owner: userId,
+        visibility: "private",
+      },
+      shared: {
+        "sharedWith.user": userId,
+        owner: { $ne: userId },
+      },
+      all: {
+        $or: [{ owner: userId }, { "sharedWith.user": userId }],
+      },
+    };
     const {
       tags,
       page = 1,
@@ -31,12 +44,15 @@ export const getAllDocuments = async (userId, query) => {
       search = "",
       sortBy = "createdAt",
       sortOrder = "desc",
+      isStarred = false,
+      visibilityType = "all",
     } = query;
 
     const skip = (page - 1) * limit;
-    const accessFilter = {
-      $or: [{ owner: userId }, { sharedWith: { user: userId } }],
-    };
+    const accessFilter = structuredClone(
+      visibilityMap[visibilityType] || visibilityMap.all
+    );
+    // $or: [{ owner: userId }, { sharedWith: { user: userId } }],
 
     if (search) {
       accessFilter.$text = { $search: search };
@@ -47,18 +63,24 @@ export const getAllDocuments = async (userId, query) => {
       accessFilter.tags = { $in: tagArray };
     }
 
+    if (isStarred) {
+      accessFilter.isStarred = isStarred;
+    }
+
     const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
     const totalDocs = await Doc.countDocuments(accessFilter);
 
+    console.log(accessFilter)
     const documents = await Doc.find(accessFilter)
-      .sort(sort)
-      .skip(skip)
-      .limit(Number(limit))
-      .populate({
-        path: "sharedWith.user",
-        select: "_id name email",
-      });
-
+    .sort(sort)
+    .skip(skip)
+    .limit(Number(limit))
+    .populate({
+      path: "sharedWith.user",
+      select: "_id name email",
+    });
+    
+    // console.log(documents)
     const totalPages = Math.ceil(totalDocs / limit);
 
     return {
@@ -240,7 +262,7 @@ export const getDocumentByLinkToken = async (linkToken) => {
     path: "sharedWith.user",
     select: "_id name email",
   });
-  
+
   if (!document) throw new ApiError(404, "Document not found");
   return document;
 };

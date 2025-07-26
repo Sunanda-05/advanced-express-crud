@@ -61,11 +61,11 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 
 **Key Components:**
 
-- **Routes** - Define API endpoints and HTTP methods
-- **Controllers** - Handle request processing and response formatting
-- **Services** - Implement business logic and data operations
-- **Middleware** - Provide authentication, validation, and error handling
-- **Models** - Define data schemas and database interactions
+* **Routes** - Define API endpoints and HTTP methods
+* **Controllers** - Handle request processing and response formatting
+* **Services** - Implement business logic and data operations
+* **Middleware** - Provide authentication, validation, and error handling
+* **Models** - Define data schemas and database interactions
 
 * **Clean, Modular Structure:**
   * Separation of concerns with dedicated directories
@@ -89,7 +89,22 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 | **Security** | Helmet, CORS, Rate-limiting |
 | **Module System** | ECMAScript Modules (`"type": "module"`) |
 
+## Swagger Docs
+
+<img src="./assests/swagger_1.png" alt="Login Page" width="400">
+<img src="./assests/swagger_2.png" alt="Login Page" width="400">
+
+<br/>
+
+Get swagger-docs at `<your-app-url>/api-docs`
+
+## Frontend 
+
+Checkout Frontend implementation of this project Here: [Papergate-Docs-Editor](https://github.com/Sunanda-05/papergate-docs-editor)
+
 ## 📡 API Authentication
+
+Short-term access-token & Long-term cookie-based Refresh-tokens are implemented using JWT
 
 ## 🔧 API Routes
 
@@ -143,7 +158,7 @@ This project draws inspiration from Google Drive-like systems (without file uplo
 |--------|----------------------|------------------------------------------|----------------------------------|
 | GET    | `/api/documents`         | `?search=&page=&limit=&sort=`            | Full-text search & pagination    |
 
-> Search is case-insensitive and supports indexed full-text queries on `title` and `content`.
+> Search is case-insensitive and supports indexed full-text queries on `title`.
 
 ---
 
@@ -163,14 +178,13 @@ For accessing documents via shared links:
 GET /api/documents/access/:linkToken
 ```
 
-## 📌 Also implements - 
+## 📌 Also implements -
 
 * 🔍 **Input Validation**
   * Request schema validation with `express-validator`
 
 * 🧼 **Enhanced Security**
   * XSS protection with `helmet`
-
 
 ## 🚀 Getting Started
 

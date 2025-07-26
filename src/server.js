@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use(helmetConfig);
-app.use(rateLimitMiddleware);
+// app.use(rateLimitMiddleware);
 // app.use(csrfMiddleware);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));

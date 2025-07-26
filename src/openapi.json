@@ -27,8 +27,7 @@
             "example": "Project Plan"
           },
           "content": {
-            "type": "object",
-            "additionalProperties": true
+            "type": "object"
           },
           "isStarred": {
             "type": "boolean",
@@ -123,7 +122,7 @@
         "required": ["title"],
         "properties": {
           "title": { "type": "string" },
-          "content": { "type": "object", "additionalProperties": true },
+          "content": { "type": "object" },
           "isStarred": { "type": "boolean" },
           "tags": {
             "type": "array",
